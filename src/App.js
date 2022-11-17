@@ -1,6 +1,8 @@
-import logo from "./logo.svg";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useEffect, useState } from "react";
+import SpotifyWebApi from "spotify-web-api-js";
+import axios from "axios";
 import {
   Container,
   InputGroup,
@@ -9,99 +11,221 @@ import {
   Row,
   Card,
 } from "react-bootstrap";
-import { useState, useEffect } from "react";
 
-const CLIENT_ID = "03df3b9ad5094f7ba2904002d7c94924";
-const CLIENT_SECRET = "00460120cfbb4f79bc69823a886d5208";
+var scopes = ["user-top-read", "user-read-recently-played"];
+var RPS = {};
 
 function App() {
-  const [searchInput, setSearchInput] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [albums, setAlbums] = useState([])
+  const CLIENT_ID = "03df3b9ad5094f7ba2904002d7c94924";
+  const REDIRECT_URI = "http://localhost:3000/";
+  const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
+  const RESPONSE_TYPE = "token";
+
+  const [token, setToken] = useState("");
+  const [currentUsersProfile, setCurrentUsersProfile] = useState(null);
+  const [recommendedSongs, setRecommendedSongs] = useState([]);
+
+  var recentlyPlayedSong = null;
+
+  // rps = recently played song
+  var rpsArtistApiLink = null;
 
   useEffect(() => {
-    // Api access token
-    var authParameters = {
-      method: "POST",
-      headers: {
-        'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body:
-        "grant_type=client_credentials&client_id" +
-        CLIENT_ID +
-        "&client_secret=" +
-        CLIENT_SECRET,
-        
-    }
+    const hash = window.location.hash;
+    let token = window.localStorage.getItem("token");
 
-    fetch('https://accounts.spotify.com/api/token', authParameters)
-      .then(result => result.json())
-      .then(data => setAccessToken(data.access_token))
+    if (!token && hash) {
+      token = hash
+        .substring(1)
+        .split("&")
+        .find((elem) => elem.startsWith("access_token"))
+        .split("=")[1];
+
+      window.location.hash = "";
+      window.localStorage.setItem("token", token);
+    }
+    setToken(token);
+
+    const getCurrentUsersProfile = () =>
+      axios.get("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          type: "user",
+        },
+      });
+
+    const fetchCurrentUsersProfile = async () => {
+      try {
+        const { data } = await getCurrentUsersProfile();
+        setCurrentUsersProfile(data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchCurrentUsersProfile();
   }, []);
 
-  // Search
-  async function search() {
-    console.log("Search for " + searchInput)
-
-    // Get request using search to get the Artist ID
-    var searchParameters = {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + accessToken
+  const getRecentlyPlayedSong = async (e) => {
+    const { data } = await axios.get(
+      "https://api.spotify.com/v1/me/player/recently-played",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit: 1,
+          type: "track",
+        },
       }
-    }
-    var artistID = await fetch('https://api.spotify.com/v1/search?q=' + searchInput + '&type=artist', searchParameters)
-      .then(response => response.json())
-      .then(data => { return data.artists.items[0].id })
+    );
 
-      console.log('artist id is ' + artistID)
-    // Get request with Artist ID grab all the albums from that artist
-    var returnedAlbums = await fetch('https://api.spotify.com/v1/artists/' + artistID + '/albums' + '?include_groups=album&market=US&limit=50', searchParameters)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        setAlbums(data.items)
-      });
-    // Display those albums to the user
-  }
+    //console.log(data);
+    recentlyPlayedSong = data.items[0].track.name;
+    RPS.rpsSongID = data.items[0].track.id;
+    RPS.rpsArtistID = data.items[0].track.artists[0].id;
+    rpsArtistApiLink = "https://api.spotify.com/v1/artists/" + RPS.rpsArtistID;
+
+    document.getElementById("recentlyPlayedSong").innerHTML =
+      recentlyPlayedSong;
+
+    getRpsArtistGenre();
+    //console.log(recentlyPlayedSong);
+    //console.log(rpsSongID);
+    //console.log(rpsArtistID);
+  };
+
+  const getRpsArtistGenre = async (e) => {
+    const { data } = await axios.get(rpsArtistApiLink, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        id: RPS.rpsArtistID,
+      },
+    });
+
+    //console.log(data);
+    //console.log(RPS.rpsArtistID);
+    RPS.rpsArtistGenre = data.genres[0];
+  };
+
+  const getRecommendedSongs = async (e) => {
+    const { data } = await axios.get(
+      "https://api.spotify.com/v1/recommendations",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit: 10,
+          seed_tracks: RPS.rpsSongID,
+          seed_artists: RPS.rpsArtistID,
+          seed_genres: RPS.rpsArtistGenre,
+        },
+      }
+    );
+
+    //console.log(rpsSongID)
+    //console.log(rpsArtistID)
+    console.log(RPS.rpsArtistGenre);
+    setRecommendedSongs(data.tracks);
+  };
+
+  const renderRecommendedSongs = () => {
+    return recommendedSongs.map((recommendedSong) => (
+      <div
+        key={recommendedSong.id}
+        className="p-1 add-space shadow p-3 mb-5 bg-white rounded"
+        id="img__container"
+      >
+        <br></br>
+        {recommendedSong.album.images.length ? (
+          <img width="50%" src={recommendedSong.album.images[0].url} alt="" />
+        ) : (
+          <div>No Image</div>
+        )}
+        <br></br>
+        <Button variant="success" id="btn__like" className=" p-3 shadow">
+          +
+        </Button>
+        <p>
+          "{recommendedSong.name}" by {recommendedSong.artists[0].name}
+        </p>
+        <br></br>
+      </div>
+    ));
+  };
+
+  const logout = () => {
+    setToken("");
+    window.localStorage.removeItem("token");
+  };
 
   return (
     <div className="App">
-      <Container>
-        <InputGroup className="mb-3" size="lg">
-          <FormControl
-            placeholder="Search For Artist"
-            type="input"
-            onKeyPress={(event) => {
-              if (event.key == "Enter") {
-                search();
-              }
-            }}
-            onChange={(event) => setSearchInput(event.target.value)}
-          />
-          <Button
-            onClick={search}
+      <header className="App-header">
+        {!token ? (
+          <a
+            href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scopes.join(
+              "%20"
+            )}&response_type=${RESPONSE_TYPE}`}
+            id="login__button"
           >
-            Search
-          </Button>
-        </InputGroup>
-      </Container>
-      <Container>
-        <Row className="mx-2 row row-cols-4">
-          {albums.map( (album, i) => {
-            return (
-              <Card>
-              <Card.Img src={album.images[0].url} />
-              <Card.Body>
-                <Card.Title>{album.name}</Card.Title>
-              </Card.Body>
-            </Card>
-            )
-          })}
-        </Row>
-      </Container>
+            Login to Spotify
+          </a>
+        ) : (
+          <>
+            <Container id="main__container">
+              <div onLoad={getRecentlyPlayedSong}>
+                {currentUsersProfile && (
+                  <div>
+                    <p id="welcome__saying">
+                      Welcome, {currentUsersProfile.display_name}
+                    </p>
+                    {currentUsersProfile.images.length &&
+                      currentUsersProfile.images[0].url && (
+                        <img
+                          className="p-1 add-space shadow p-3 mb-5 bg-white rounded"
+                          src={currentUsersProfile.images[0].url}
+                          alt="Avatar"
+                        />
+                      )}
+                  </div>
+                )}
+              </div>
+
+              <p>
+                Last played song: <span id="recentlyPlayedSong"></span>
+              </p>
+
+              <Button
+                variant="success"
+                size="lg"
+                className="shadow p-2 mb-5"
+                onClick={getRecommendedSongs}
+              >
+                Get Recommended Songs
+              </Button>
+
+              <br></br>
+
+              <Button
+                variant="danger"
+                className="shadow p-2 mb-5"
+                onClick={logout}
+              >
+                Logout
+              </Button>
+
+              <br></br>
+
+              {renderRecommendedSongs()}
+            </Container>
+          </>
+        )}
+      </header>
     </div>
   );
 }
