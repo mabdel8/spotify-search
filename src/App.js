@@ -1,3 +1,4 @@
+import React from "react";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useEffect, useState } from "react";
@@ -11,6 +12,7 @@ import {
   Row,
   Card,
 } from "react-bootstrap";
+import $ from "jquery";
 
 var scopes = ["user-top-read", "user-read-recently-played"];
 var RPS = {};
@@ -24,6 +26,7 @@ function App() {
   const [token, setToken] = useState("");
   const [currentUsersProfile, setCurrentUsersProfile] = useState(null);
   const [recommendedSongs, setRecommendedSongs] = useState([]);
+  const [backgroundColor, setBackgroundColor] = useState("#ffff");
 
   var recentlyPlayedSong = null;
 
@@ -133,6 +136,10 @@ function App() {
     setRecommendedSongs(data.tracks);
   };
 
+  $(".btn__like").click(function () {
+    $(this).addClass("active");
+  });
+
   const renderRecommendedSongs = () => {
     return recommendedSongs.map((recommendedSong) => (
       <div
@@ -147,7 +154,12 @@ function App() {
           <div>No Image</div>
         )}
         <br></br>
-        <Button variant="success" id="btn__like" className=" p-3 shadow">
+        <Button
+          variant="info"
+          className="btn__like"
+          id="btn__like"
+          style={{ backgroundColor: backgroundColor }}
+        >
           +
         </Button>
         <p>
@@ -178,50 +190,55 @@ function App() {
         ) : (
           <>
             <Container id="main__container">
-              <div onLoad={getRecentlyPlayedSong}>
+              <div onLoad={getRecentlyPlayedSong} id="user__card">
                 {currentUsersProfile && (
                   <div>
-                    <p id="welcome__saying">
+                    {/* <p id="welcome__saying">
                       Welcome, {currentUsersProfile.display_name}
-                    </p>
+                    </p> */}
                     {currentUsersProfile.images.length &&
                       currentUsersProfile.images[0].url && (
                         <img
-                          className="p-1 add-space shadow p-3 mb-5 bg-white rounded"
+                          className="p-1 add-space shadow p-3 mb-5 bg-white rounded-circle"
                           src={currentUsersProfile.images[0].url}
                           alt="Avatar"
+                          id="user__img"
                         />
                       )}
                   </div>
                 )}
+                <p id="last__played">
+                  LAST PLAYED SONG: <span id="recentlyPlayedSong"></span>
+                </p>
+
+                <Button
+                  className="p-2"
+                  onClick={getRecommendedSongs}
+                  id="recommend__btn"
+                >
+                  Recommended
+                </Button>
+                <Button
+                  className="p-2"
+                  onClick={getRecommendedSongs}
+                  id="profile__btn"
+                >
+                  Profile
+                </Button>
+                <Button
+                  className="p-2"
+                  onClick={getRecommendedSongs}
+                  id="discover__btn"
+                >
+                  Discover
+                </Button>
+
+                <Button className="p-2" onClick={logout} id="logout__btn">
+                  Logout
+                </Button>
               </div>
 
-              <p>
-                Last played song: <span id="recentlyPlayedSong"></span>
-              </p>
-
-              <Button
-                variant="success"
-                size="lg"
-                className="shadow p-2 mb-5"
-                onClick={getRecommendedSongs}
-              >
-                Get Recommended Songs
-              </Button>
-
-              <br></br>
-
-              <Button
-                variant="danger"
-                className="shadow p-2 mb-5"
-                onClick={logout}
-              >
-                Logout
-              </Button>
-
-              <br></br>
-
-              {renderRecommendedSongs()}
+              <div id="song__list">{renderRecommendedSongs()}</div>
             </Container>
           </>
         )}
