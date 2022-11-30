@@ -214,26 +214,26 @@ function App() {
                 <Button
                   className="p-2"
                   onClick={getRecommendedSongs}
-                  id="recommend__btn"
+                  id="site__btn"
                 >
                   Recommended
                 </Button>
                 <Button
                   className="p-2"
                   onClick={getRecommendedSongs}
-                  id="profile__btn"
+                  id="site__btn"
                 >
                   Profile
                 </Button>
                 <Button
                   className="p-2"
                   onClick={getRecommendedSongs}
-                  id="discover__btn"
+                  id="site__btn"
                 >
                   Discover
                 </Button>
 
-                <Button className="p-2" onClick={logout} id="logout__btn">
+                <Button className="p-2" onClick={logout} id="site__btn">
                   Logout
                 </Button>
               </div>
