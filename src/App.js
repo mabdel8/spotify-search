@@ -11,10 +11,16 @@ import {
   Button,
   Row,
   Card,
+  Modal,
 } from "react-bootstrap";
 import $ from "jquery";
 
-var scopes = ["user-top-read", "user-read-recently-played", "playlist-modify-private", "playlist-modify-public"];
+var scopes = [
+  "user-top-read",
+  "user-read-recently-played",
+  "playlist-modify-private",
+  "playlist-modify-public",
+];
 var RPS = {};
 var userID;
 var playlistID;
@@ -29,6 +35,7 @@ function App() {
   const [currentUsersProfile, setCurrentUsersProfile] = useState(null);
   const [recommendedSongs, setRecommendedSongs] = useState([]);
   const [backgroundColor, setBackgroundColor] = useState("#ffff");
+  const [smShow, setSmShow] = useState(false);
 
   var recentlyPlayedSong = null;
 
@@ -87,35 +94,30 @@ function App() {
           Authorization: `Bearer ${token}`,
         },
         params: {
-          limit: 50
+          limit: 50,
         },
       }
     );
 
     var playlistNames = [];
-    for (var i=0; i<=50; i++)
-    {
+    for (var i = 0; i <= 50; i++) {
       playlistNames.push(data.items[i].name);
 
-      if (data.items[i+1] == null)
-      {
+      if (data.items[i + 1] == null) {
         break;
       }
     }
 
-    if (!playlistNames.includes("Music Leaf Songs"))
-    {
+    if (!playlistNames.includes("Music Leaf Songs")) {
       //console.log("Music Leaf Songs playlist does not exist.");
       createPlaylist();
-    }
-    else
-    {
+    } else {
       var index = playlistNames.indexOf("Music Leaf Songs");
       playlistID = data.items[index].id;
-      console.log("Music Leaf Songs playlist has been created.")
+      console.log("Music Leaf Songs playlist has been created.");
     }
     //console.log(playlistNames);
-  }
+  };
 
   const createPlaylist = async (e) => {
     //console.log("createPlaylist ran successfully.")
@@ -129,12 +131,12 @@ function App() {
       {
         headers: {
           Authorization: `Bearer ${token}`,
-        }
-    });
+        },
+      }
+    );
 
     checkForPlaylist();
-  }
-
+  };
 
   const getRecentlyPlayedSong = async (e) => {
     const { data } = await axios.get(
@@ -202,37 +204,48 @@ function App() {
     setRecommendedSongs(data.tracks);
   };
 
-  $(".btn__like").click(function () {
-    $(this).addClass("active");
-  });
-
   const renderRecommendedSongs = () => {
     return recommendedSongs.map((recommendedSong) => (
-      <div
-        key={recommendedSong.id}
-        className="p-1 add-space shadow p-3 mb-5 bg-white rounded"
-        id="img__container"
-      >
-        <br></br>
+      <div key={recommendedSong.id} className="" id="img__container">
         {recommendedSong.album.images.length ? (
-          <img width="50%" src={recommendedSong.album.images[0].url} alt="" />
+          <img
+            width="50%"
+            src={recommendedSong.album.images[0].url}
+            alt=""
+            id="img__song"
+          />
         ) : (
           <div>No Image</div>
         )}
-        <br></br>
         <Button
           variant="info"
           className="btn__like"
           id="btn__like"
           style={{ backgroundColor: backgroundColor }}
-          onClick={() => addSongToPlaylist(recommendedSong)}
+          onClick={() => {
+            addSongToPlaylist(recommendedSong);
+            setSmShow(true);
+          }}
         >
           +
         </Button>
-        <p>
+        <p id="song__creds">
           "{recommendedSong.name}" by {recommendedSong.artists[0].name}
         </p>
         <br></br>
+        <Modal
+          size="sm"
+          show={smShow}
+          onHide={() => setSmShow(false)}
+          aria-labelledby="example-modal-sizes-title-sm"
+        >
+          <Modal.Header closeButton>
+            <Modal.Title id="example-modal-sizes-title-sm">
+              Successfully Added!
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>song successfully added to Leaf playlist</Modal.Body>
+        </Modal>
       </div>
     ));
   };
@@ -251,14 +264,19 @@ function App() {
       {
         headers: {
           Authorization: `Bearer ${token}`,
-        }
-    });
+        },
+      }
+    );
   }
 
   const logout = () => {
     setToken("");
     window.localStorage.removeItem("token");
   };
+
+  $(".btn__like").click(function () {
+    $(this).addClass("active");
+  });
 
   return (
     <div className="App">
@@ -274,57 +292,76 @@ function App() {
           </a>
         ) : (
           <>
-            <Container id="main__container">
-              <div onLoad={onLoadFunctions} id="user__card">
-                {currentUsersProfile && (
-                  <div>
-                    {/* <p id="welcome__saying">
+            <div id="overall">
+              <div id="nav__bar">
+                <div id="search__container">
+                  <input type="text" id="search__bar" />
+                  <div id="search__background">
+                    <img src={require("./search.png")} id="search__img" />
+                  </div>
+                </div>
+
+                <div id="title__name">
+                  <img src={require("./leaf.png")} id="logo__img" />
+                  Leaf
+                </div>
+              </div>
+              <Container id="main__container">
+                <div onLoad={onLoadFunctions} id="user__card">
+                  {currentUsersProfile && (
+                    <div>
+                      {/* <p id="welcome__saying">
                       Welcome, {currentUsersProfile.display_name}
                     </p> */}
-                    {currentUsersProfile.images.length &&
-                      currentUsersProfile.images[0].url && (
-                        <img
-                          className="p-1 add-space shadow p-3 mb-5 bg-white rounded-circle"
-                          src={currentUsersProfile.images[0].url}
-                          alt="Avatar"
-                          id="user__img"
-                        />
-                      )}
-                  </div>
-                )}
-                <p id="last__played">
-                  LAST PLAYED SONG: <span id="recentlyPlayedSong"></span>
-                </p>
+                      {currentUsersProfile.images.length &&
+                        currentUsersProfile.images[0].url && (
+                          <img
+                            className="p-1 add-space mb-5 rounded-circle"
+                            src={currentUsersProfile.images[0].url}
+                            alt="Avatar"
+                            id="user__img"
+                          />
+                        )}
+                    </div>
+                  )}
+                  <p id="last__played">
+                    LAST PLAYED SONG: <span id="recentlyPlayedSong"></span>
+                  </p>
 
-                <Button
-                  className="p-2"
-                  onClick={getRecommendedSongs}
-                  id="site__btn"
-                >
-                  Recommended
-                </Button>
-                <Button
-                  className="p-2"
-                  onClick={getRecommendedSongs}
-                  id="site__btn"
-                >
-                  Profile
-                </Button>
-                <Button
-                  className="p-2"
-                  onClick={getRecommendedSongs}
-                  id="site__btn"
-                >
-                  Discover
-                </Button>
+                  <Button
+                    className="p-2"
+                    onClick={getRecommendedSongs}
+                    id="site__btn"
+                  >
+                    <img src={require("./heart.png")} id="icon__img" />
+                    Recommended
+                  </Button>
+                  <Button
+                    className="p-2"
+                    onClick={getRecommendedSongs}
+                    id="site__btn"
+                  >
+                    <img src={require("./user.png")} id="icon__img" />
+                    Profile
+                  </Button>
+                  <Button
+                    className="p-2"
+                    onClick={getRecommendedSongs}
+                    id="site__btn"
+                  >
+                    <img src={require("./world.png")} id="icon__img" />
+                    Discover
+                  </Button>
 
-                <Button className="p-2" onClick={logout} id="site__btn">
-                  Logout
-                </Button>
-              </div>
+                  <Button className="p-2" onClick={logout} id="site__btn">
+                    <img src={require("./logout.png")} id="icon__img" />
+                    Logout
+                  </Button>
+                </div>
 
-              <div id="song__list">{renderRecommendedSongs()}</div>
-            </Container>
+                <div id="song__list">{renderRecommendedSongs()}</div>
+              </Container>
+            </div>
           </>
         )}
       </header>
