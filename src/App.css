@@ -92,11 +92,11 @@
   top: 50%;
   right: 47%;
   text-decoration: none;
-  background-color: rgb(224, 242, 249);
+  background-color: rgb(239, 239, 239);
   color: black;
   padding: 10px;
   border-radius: 1.6rem;
-  box-shadow: 3px 3px 1px 1px rgba(255, 0, 242, 0.2);
+  box-shadow: 3px 3px 1px 1px rgba(0, 173, 181, 0.9);
 }
 
 .active {

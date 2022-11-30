@@ -14,8 +14,10 @@ import {
 } from "react-bootstrap";
 import $ from "jquery";
 
-var scopes = ["user-top-read", "user-read-recently-played"];
+var scopes = ["user-top-read", "user-read-recently-played", "playlist-modify-private", "playlist-modify-public"];
 var RPS = {};
+var userID;
+var playlistID;
 
 function App() {
   const CLIENT_ID = "03df3b9ad5094f7ba2904002d7c94924";
@@ -69,6 +71,70 @@ function App() {
     };
     fetchCurrentUsersProfile();
   }, []);
+
+  function onLoadFunctions() {
+    getRecentlyPlayedSong();
+    checkForPlaylist();
+  }
+
+  const checkForPlaylist = async (e) => {
+    //console.log("checkForPlaylist ran successfully.")
+
+    const { data } = await axios.get(
+      "https://api.spotify.com/v1/me/playlists",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          limit: 50
+        },
+      }
+    );
+
+    var playlistNames = [];
+    for (var i=0; i<=50; i++)
+    {
+      playlistNames.push(data.items[i].name);
+
+      if (data.items[i+1] == null)
+      {
+        break;
+      }
+    }
+
+    if (!playlistNames.includes("Music Leaf Songs"))
+    {
+      //console.log("Music Leaf Songs playlist does not exist.");
+      createPlaylist();
+    }
+    else
+    {
+      var index = playlistNames.indexOf("Music Leaf Songs");
+      playlistID = data.items[index].id;
+      console.log("Music Leaf Songs playlist has been created.")
+    }
+    //console.log(playlistNames);
+  }
+
+  const createPlaylist = async (e) => {
+    //console.log("createPlaylist ran successfully.")
+    userID = currentUsersProfile.id;
+
+    const { data } = await axios.post(
+      "https://api.spotify.com/v1/users/" + userID + "/playlists",
+      {
+        name: "Music Leaf Songs",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+    });
+
+    checkForPlaylist();
+  }
+
 
   const getRecentlyPlayedSong = async (e) => {
     const { data } = await axios.get(
@@ -159,6 +225,7 @@ function App() {
           className="btn__like"
           id="btn__like"
           style={{ backgroundColor: backgroundColor }}
+          onClick={() => addSongToPlaylist(recommendedSong)}
         >
           +
         </Button>
@@ -169,6 +236,24 @@ function App() {
       </div>
     ));
   };
+
+  async function addSongToPlaylist(recommendedSong) {
+    var songURI = recommendedSong.uri;
+
+    console.log(songURI);
+    console.log(playlistID);
+
+    await axios.post(
+      "https://api.spotify.com/v1/playlists/" + playlistID + "/tracks",
+      {
+        uris: [songURI],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+    });
+  }
 
   const logout = () => {
     setToken("");
@@ -190,7 +275,7 @@ function App() {
         ) : (
           <>
             <Container id="main__container">
-              <div onLoad={getRecentlyPlayedSong} id="user__card">
+              <div onLoad={onLoadFunctions} id="user__card">
                 {currentUsersProfile && (
                   <div>
                     {/* <p id="welcome__saying">
