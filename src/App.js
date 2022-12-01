@@ -282,14 +282,63 @@ function App() {
     <div className="App">
       <header className="App-header">
         {!token ? (
-          <a
-            href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scopes.join(
-              "%20"
-            )}&response_type=${RESPONSE_TYPE}`}
-            id="login__button"
-          >
-            Login to Spotify
-          </a>
+          <div id="login__div">
+            <div id="home__nav">
+              <div id="title__name__two">
+                Music
+                <img src={require("./leaf.png")} id="logo__img" />
+              </div>
+              <div>
+                <ul>
+                  <li>
+                    <a href="">Home</a>
+                  </li>
+                  <li>
+                    <a href="">Pricing</a>
+                  </li>
+                  <li>
+                    <a href="">About</a>
+                  </li>
+                  <li>
+                    <a id="contact__btn" href="">
+                      Contact
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <img src={require("./user.png")} id="icon__img__two" />
+                <a
+                  href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scopes.join(
+                    "%20"
+                  )}&response_type=${RESPONSE_TYPE}`}
+                  id="login__button__two"
+                >
+                  Login to Spotify
+                </a>
+              </div>
+            </div>
+
+            <div id="landing__container">
+
+            <div id="main__welcome">
+              <div>Welcome to MusicLeaf!</div>
+              <div>Welcome to MusicLeaf!</div>
+              <div>Welcome to MusicLeaf!</div>
+              <div>Welcome to MusicLeaf!</div>
+            </div>
+            <a
+              href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${scopes.join(
+                "%20"
+              )}&response_type=${RESPONSE_TYPE}`}
+              id="login__button"
+            >
+              Login to Spotify
+            </a>
+            <a href="" id="seemore__btn">see more</a>
+
+            </div>
+          </div>
         ) : (
           <>
             <div id="overall">
@@ -302,8 +351,8 @@ function App() {
                 </div>
 
                 <div id="title__name">
+                  Music
                   <img src={require("./leaf.png")} id="logo__img" />
-                  Leaf
                 </div>
               </div>
               <Container id="main__container">
@@ -331,10 +380,10 @@ function App() {
                   <Button
                     className="p-2"
                     onClick={getRecommendedSongs}
-                    id="site__btn"
+                    id="site__btn__rec"
                   >
                     <img src={require("./heart.png")} id="icon__img" />
-                    Recommended
+                    Refresh recommended
                   </Button>
                   <Button
                     className="p-2"
