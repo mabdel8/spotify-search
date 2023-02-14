@@ -1,4 +1,14 @@
-# Getting Started with Create React App
+# MusicLeaf
+MusicLeaf is an application that recommends a user songs based on their music preference which is extracted using the spotify API. This metadata is used to recommend users songs that are similar to their liked songs. When visiting the application, you will be prompted to log in to your spotify account. There you will see songs that you can add to your spotify playlist.
+
+## Main Page of Spotify Music recommender
+
+<img width="1440" alt="Screen Shot 2022-12-07 at 10 28 57 PM" src="https://user-images.githubusercontent.com/98300789/218883081-39c01622-710f-4d2a-8f75-640a30bc2cc2.png">
+
+## Home page/ Login page
+<img width="1440" alt="Screen Shot 2022-12-07 at 10 16 25 PM" src="https://user-images.githubusercontent.com/98300789/218883354-21a30e4d-0f23-4ec0-a336-363d0ebc7d5f.png">
+
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
